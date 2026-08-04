@@ -44,7 +44,7 @@ def run_single_backtest(df: pd.DataFrame, cash: float = 50000, commission: float
     # broker/prop firm and should be set to the actual figure once known,
     # not left at this default for a real report.
     bt = Backtest(df, ORBStrategy, cash=cash, commission=commission, margin=margin, exclusive_orders=True)
-    stats = bt.run()
+    stats = bt.run(finalize_trades=True)
     return stats
 
 
