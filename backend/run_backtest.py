@@ -34,8 +34,16 @@ def split_data(df: pd.DataFrame, split_ratio: float):
     return in_sample, out_of_sample
 
 
-def run_single_backtest(df: pd.DataFrame, cash: float = 50000, commission: float = 0.0002):
-    bt = Backtest(df, ORBStrategy, cash=cash, commission=commission, exclusive_orders=True)
+def run_single_backtest(df: pd.DataFrame, cash: float = 50000, commission: float = 0.0002, margin: float = 0.05):
+    # margin=0.05 tells backtesting.py this is a leveraged/futures
+    # instrument, only ~5% of notional is required as buying power per
+    # contract, not the full price. Without this, backtesting.py treats
+    # every unit of `size` as a full-price stock purchase and silently
+    # cancels every order once notional exceeds cash. 0.05 is a rough
+    # placeholder — real NQ/ES day-trading margin requirements vary by
+    # broker/prop firm and should be set to the actual figure once known,
+    # not left at this default for a real report.
+    bt = Backtest(df, ORBStrategy, cash=cash, commission=commission, margin=margin, exclusive_orders=True)
     stats = bt.run()
     return stats
 
