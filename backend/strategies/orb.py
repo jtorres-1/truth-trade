@@ -97,6 +97,8 @@ class ORBStrategy(Strategy):
         self.state = None          # None | "broke_up" | "broke_down"
         self.rejection_seen = False
         self.rejection_close = None
+        self.rejection_low = None
+        self.rejection_high = None
         self.last_trade_date = None
         self.trades_today = 0
 
@@ -148,6 +150,10 @@ class ORBStrategy(Strategy):
             if rejected:
                 self.rejection_seen = True
                 self.rejection_close = price
+                self.rejection_low = low    # stop reference — the
+                self.rejection_high = high  # rejection candle's own
+                                             # wick, NOT the confirmation
+                                             # candle's, per spec
             return
 
         if self.state == "broke_down" and not self.rejection_seen:
@@ -156,13 +162,20 @@ class ORBStrategy(Strategy):
             if rejected:
                 self.rejection_seen = True
                 self.rejection_close = price
+                self.rejection_low = low
+                self.rejection_high = high
             return
 
         # STEP 4: confirmation candle — enter here
         if self.state == "broke_up" and self.rejection_seen:
             if price > self.rejection_close:
-                sl = low  # stop at the rejection candle's low
+                sl = self.rejection_low  # stop at the REJECTION candle's
+                                          # low, not the confirmation bar
                 risk = price - sl
+                if risk <= 0:
+                    self.state = None
+                    self.rejection_seen = False
+                    return
                 tp = price + risk * self.risk_reward
                 self.buy(size=self.contracts, sl=sl, tp=tp)
                 self.trades_today += 1
@@ -172,8 +185,13 @@ class ORBStrategy(Strategy):
 
         if self.state == "broke_down" and self.rejection_seen:
             if price < self.rejection_close:
-                sl = high  # stop at the rejection candle's high
+                sl = self.rejection_high  # stop at the REJECTION candle's
+                                           # high, not the confirmation bar
                 risk = sl - price
+                if risk <= 0:
+                    self.state = None
+                    self.rejection_seen = False
+                    return
                 tp = price - risk * self.risk_reward
                 self.sell(size=self.contracts, sl=sl, tp=tp)
                 self.trades_today += 1
