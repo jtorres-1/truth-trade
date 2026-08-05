@@ -38,7 +38,7 @@ def split_data(df: pd.DataFrame, split_ratio: float):
     return in_sample, out_of_sample
 
 
-def run_single_backtest(df: pd.DataFrame, strategy_cls, cash: float = 50000, commission: float = 0.0002, margin: float = 0.05):
+def run_single_backtest(df: pd.DataFrame, strategy_cls, cash: float = 50000, commission: float = 0.0, margin: float = 0.05):
     bt = Backtest(df, strategy_cls, cash=cash, commission=commission, margin=margin, exclusive_orders=True)
     stats = bt.run()
     return stats
